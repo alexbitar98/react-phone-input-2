@@ -408,26 +408,51 @@ class PhoneInput extends React.Component {
 
     let pattern;
     if (country.iso2 === 'nz') {
-      // Clean the input number
+      // Clean the input number and handle the prefix
       let cleanNumber = text.replace(/\D/g, '');
       
-      // Remove any duplicate 64 prefix
-      if (cleanNumber.startsWith('64')) {
-        cleanNumber = cleanNumber.substring(2);
-      }
-      
-      // If empty, just return the prefix
-      if (!cleanNumber) {
+      // Special handling for NZ numbers
+      if (cleanNumber === '64') {
         return '+64 ';
       }
+      
+      // Remove country code if present
+      if (cleanNumber.startsWith('64')) {
+        cleanNumber = cleanNumber.slice(2);
+      }
 
+      // Format based on the first digit
+      const firstDigit = cleanNumber[0];
       const singleDigitPrefixes = ['3', '4', '6', '7', '9'];
-      const startsWithSingleDigitPrefix = singleDigitPrefixes.includes(cleanNumber[0]);
       
-      pattern = startsWithSingleDigitPrefix ? '+64 (.) ...-....' : '+64 (..) ...-....';
-      
-      // Use the cleaned number for formatting
-      text = cleanNumber;
+      // Build the formatted number manually for NZ
+      if (!cleanNumber) {
+        return '+64 ';
+      } else if (cleanNumber.length === 1) {
+        return `+64 (${cleanNumber}`;
+      } else if (singleDigitPrefixes.includes(firstDigit)) {
+        // Single digit area code format
+        const areaCode = cleanNumber.slice(0, 1);
+        const firstPart = cleanNumber.slice(1, 4);
+        const secondPart = cleanNumber.slice(4);
+        
+        let formatted = `+64 (${areaCode})`;
+        if (firstPart) formatted += ` ${firstPart}`;
+        if (secondPart) formatted += `-${secondPart}`;
+        
+        return formatted;
+      } else {
+        // Double digit area code format
+        const areaCode = cleanNumber.slice(0, 2);
+        const firstPart = cleanNumber.slice(2, 5);
+        const secondPart = cleanNumber.slice(5);
+        
+        let formatted = `+64 (${areaCode})`;
+        if (firstPart) formatted += ` ${firstPart}`;
+        if (secondPart) formatted += `-${secondPart}`;
+        
+        return formatted;
+      }
     }
     else if (disableCountryCode) {
       pattern = format.split(' ');
@@ -443,15 +468,13 @@ class PhoneInput extends React.Component {
       }
     }
 
+    // Rest of the original formatting code for non-NZ numbers
     if (!text || text.length === 0) {
       return disableCountryCode ? '' : this.props.prefix;
     }
 
-    // Skip the early return for NZ numbers
-    if (country.iso2 !== 'nz') {
-      if ((text && text.length < 2) || !pattern || !autoFormat) {
-        return disableCountryCode ? text : this.props.prefix+text;
-      }
+    if ((text && text.length < 2) || !pattern || !autoFormat) {
+      return disableCountryCode ? text : this.props.prefix+text;
     }
 
     const formattedObject = reduce(pattern, (acc, character) => {
@@ -484,8 +507,11 @@ class PhoneInput extends React.Component {
       formattedNumber = formattedObject.formattedText;
     }
 
-    // Always close brackets
-    if (formattedNumber.includes('(') && !formattedNumber.includes(')')) formattedNumber += ')';
+    // Close brackets for non-NZ numbers
+    if (country.iso2 !== 'nz' && formattedNumber.includes('(') && !formattedNumber.includes(')')) {
+      formattedNumber += ')';
+    }
+    
     return formattedNumber;
   }
 
