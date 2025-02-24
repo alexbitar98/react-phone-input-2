@@ -253,9 +253,7 @@ class PhoneInput extends React.Component {
     }
     else if (prevProps.value !== this.props.value) {
       this.updateFormattedNumber(this.props.value);
-    } else if (prevProps.masks !== this.props.masks) {
-      this.updateMasks();
-    }
+    }  
   }
 
   getProbableCandidate = memoize((queryString) => {
@@ -309,32 +307,6 @@ class PhoneInput extends React.Component {
   });
 
   // Hooks for updated props
-  updateMasks() {
-    const { onlyCountries, preferredCountries, hiddenAreaCodes } = new CountryData(
-      this.props.enableAreaCodes, 
-      this.props.enableTerritories, 
-      this.props.regions,
-      this.props.onlyCountries, 
-      this.props.preferredCountries, 
-      this.props.excludeCountries, 
-      this.props.preserveOrder,
-      this.props.masks, 
-      this.props.priority, 
-      this.props.areaCodes, 
-      this.props.localization,
-      this.props.prefix, 
-      this.props.defaultMask, 
-      this.props.alwaysDefaultMask,
-    );
-  
-    this.setState({
-      onlyCountries,
-      preferredCountries,
-      hiddenAreaCodes,
-    }, () => {
-      this.updateFormattedNumber(this.props.value);
-    });
-  }
 
   
   updateCountry = (country) => {
@@ -435,7 +407,13 @@ class PhoneInput extends React.Component {
     const { disableCountryCode, enableAreaCodeStretch, enableLongNumbers, autoFormat } = this.props;
 
     let pattern;
-    if (disableCountryCode) {
+    if (country.iso2 === 'nz') {
+      const singleDigitPrefixes = ['+643', '+644', '+646', '+647', '+649'];
+      const startsWithSingleDigitPrefix = singleDigitPrefixes.some(prefix => 
+        text.startsWith(prefix)
+      );
+      pattern = startsWithSingleDigitPrefix ? '(.) ...-....)' : '(..) ...-....';
+    } else if (disableCountryCode) {
       pattern = format.split(' ');
       pattern.shift();
       pattern = pattern.join(' ');
