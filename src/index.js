@@ -408,11 +408,15 @@ class PhoneInput extends React.Component {
 
     let pattern;
     if (country.iso2 === 'nz') {
-      const singleDigitPrefixes = ['+643', '+644', '+646', '+647', '+649'];
+      // Remove the +64 prefix for pattern matching
+      const numberWithoutPrefix = text.startsWith('+64') ? text.substring(3) : text;
+      const singleDigitPrefixes = ['3', '4', '6', '7', '9'];
       const startsWithSingleDigitPrefix = singleDigitPrefixes.some(prefix => 
-        text.startsWith(prefix)
+        numberWithoutPrefix.startsWith(prefix)
       );
-      pattern = startsWithSingleDigitPrefix ? '(.) ...-....)' : '(..) ...-....';
+      
+      // Format the number without the prefix
+      pattern = startsWithSingleDigitPrefix ? '+64 (.) ...-....' : '+64 (..) ...-....';
     } else if (disableCountryCode) {
       pattern = format.split(' ');
       pattern.shift();
