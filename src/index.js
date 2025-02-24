@@ -408,14 +408,26 @@ class PhoneInput extends React.Component {
 
     let pattern;
     if (country.iso2 === 'nz') {
-      const singleDigitPrefixes = ['+643', '+644', '+646', '+647', '+649'];
-      const startsWithSingleDigitPrefix = singleDigitPrefixes.some(prefix => 
-        text.startsWith(prefix)
-      );
-      pattern = startsWithSingleDigitPrefix ? '+64 (.) ...-....)' : '+64 (..) ...-....';
-
-
-    }else if (disableCountryCode) {
+      const inputNumber = text.replace(/\D/g, '');
+      const areaCode = inputNumber.slice(2, 3); // Get first digit after country code
+      
+      // Define patterns based on area code
+      if (['3', '4', '6', '7', '9'].includes(areaCode)) {
+        // Single digit area codes
+        if (inputNumber.length <= 3) {
+          pattern = '+64 (';
+        } else {
+          pattern = '+64 (.) ...-....';
+        }
+      } else {
+        // Double digit area codes
+        if (inputNumber.length <= 4) {
+          pattern = '+64 (';
+        } else {
+          pattern = '+64 (..) ...-....';
+        }
+      }
+    } else if (disableCountryCode) {
       pattern = format.split(' ');
       pattern.shift();
       pattern = pattern.join(' ');
@@ -429,8 +441,6 @@ class PhoneInput extends React.Component {
       }
     }
 
-    console.log('pattern', pattern);
-    
     if (!text || text.length === 0) {
       return disableCountryCode ? '' : this.props.prefix;
     }
@@ -438,7 +448,7 @@ class PhoneInput extends React.Component {
     // for all strings with length less than 3, just return it (1, 2 etc.)
     // also return the same text if the selected country has no fixed format
     if ((text && text.length < 2) || !pattern || !autoFormat) {
-      return disableCountryCode ? text : this.props.prefix+text;
+      return disableCountryCode ? text : this.props.prefix + text;
     }
 
     const formattedObject = reduce(pattern, (acc, character) => {
@@ -471,8 +481,18 @@ class PhoneInput extends React.Component {
       formattedNumber = formattedObject.formattedText;
     }
 
-    // Always close brackets
-    if (formattedNumber.includes('(') && !formattedNumber.includes(')')) formattedNumber += ')';
+    // Only add closing parenthesis if we have an area code
+    if (country.iso2 === 'nz') {
+      const inputNumber = text.replace(/\D/g, '');
+      if (inputNumber.length >= 3) {
+        if (!formattedNumber.includes(')')) {
+          formattedNumber += ')';
+        }
+      }
+    } else if (formattedNumber.includes('(') && !formattedNumber.includes(')')) {
+      formattedNumber += ')';
+    }
+
     return formattedNumber;
   }
 
