@@ -407,16 +407,27 @@ class PhoneInput extends React.Component {
     const { disableCountryCode, enableAreaCodeStretch, enableLongNumbers, autoFormat } = this.props;
 
     let pattern;
-      if (country.iso2 === 'nz') {
-      // Remove the +64 prefix for pattern matching
-      const numberWithoutPrefix = text.startsWith('+64') ? text.substring(3) : text;
-      const singleDigitPrefixes = ['3', '4', '6', '7', '9'];
-      const startsWithSingleDigitPrefix = singleDigitPrefixes.some(prefix => 
-        numberWithoutPrefix.startsWith(prefix)
-      );
+    if (country.iso2 === 'nz') {
+      // Clean the input number
+      let cleanNumber = text.replace(/\D/g, '');
       
-      // Format the number without the prefix
+      // Remove any duplicate 64 prefix
+      if (cleanNumber.startsWith('64')) {
+        cleanNumber = cleanNumber.substring(2);
+      }
+      
+      // If empty, just return the prefix
+      if (!cleanNumber) {
+        return '+64 ';
+      }
+
+      const singleDigitPrefixes = ['3', '4', '6', '7', '9'];
+      const startsWithSingleDigitPrefix = singleDigitPrefixes.includes(cleanNumber[0]);
+      
       pattern = startsWithSingleDigitPrefix ? '+64 (.) ...-....' : '+64 (..) ...-....';
+      
+      // Use the cleaned number for formatting
+      text = cleanNumber;
     }
     else if (disableCountryCode) {
       pattern = format.split(' ');
@@ -436,12 +447,12 @@ class PhoneInput extends React.Component {
       return disableCountryCode ? '' : this.props.prefix;
     }
 
-    // for all strings with length less than 3, just return it (1, 2 etc.)
-    // also return the same text if the selected country has no fixed format
+    // Skip the early return for NZ numbers
     if (country.iso2 !== 'nz') {
-    if ((text && text.length < 2) || !pattern || !autoFormat) {
-      return disableCountryCode ? text : this.props.prefix+text;
-    }}
+      if ((text && text.length < 2) || !pattern || !autoFormat) {
+        return disableCountryCode ? text : this.props.prefix+text;
+      }
+    }
 
     const formattedObject = reduce(pattern, (acc, character) => {
       if (acc.remainingText.length === 0) {
