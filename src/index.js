@@ -407,36 +407,18 @@ class PhoneInput extends React.Component {
     const { disableCountryCode, enableAreaCodeStretch, enableLongNumbers, autoFormat } = this.props;
 
     let pattern;
-    if (country.iso2 === 'nz') {
-      // Remove any non-digits and ensure we don't have duplicate country code
-      let inputNumber = text.replace(/\D/g, '');
-      if (inputNumber.startsWith('64')) {
-        inputNumber = inputNumber.slice(2);
-      }
+      if (country.iso2 === 'nz') {
+      // Remove the +64 prefix for pattern matching
+      const numberWithoutPrefix = text.startsWith('+64') ? text.substring(3) : text;
+      const singleDigitPrefixes = ['3', '4', '6', '7', '9'];
+      const startsWithSingleDigitPrefix = singleDigitPrefixes.some(prefix => 
+        numberWithoutPrefix.startsWith(prefix)
+      );
       
-      const areaCode = inputNumber.slice(0, 1); // Get first digit of local number
-      
-      // Define patterns based on area code
-      if (['3', '4', '6', '7', '9'].includes(areaCode)) {
-        // Single digit area codes
-        pattern = '+64 (.) ...-....';
-      } else {
-        // Double digit area codes
-        pattern = '+64 (..) ...-....';
-      }
-
-      // If we don't have enough digits yet, just show what we have
-      if (inputNumber.length === 0) {
-        return '+64 ';
-      } else if (inputNumber.length === 1) {
-        return `+64 (${inputNumber})`;
-      } else if (inputNumber.length === 2 && !['3', '4', '6', '7', '9'].includes(areaCode)) {
-        return `+64 (${inputNumber})`;
-      }
-
-      // Format the rest of the number using the pattern
-      text = inputNumber; // Use the cleaned number for the rest of the formatting
-    } else if (disableCountryCode) {
+      // Format the number without the prefix
+      pattern = startsWithSingleDigitPrefix ? '+64 (.) ...-....' : '+64 (..) ...-....';
+    }
+    else if (disableCountryCode) {
       pattern = format.split(' ');
       pattern.shift();
       pattern = pattern.join(' ');
@@ -456,9 +438,10 @@ class PhoneInput extends React.Component {
 
     // for all strings with length less than 3, just return it (1, 2 etc.)
     // also return the same text if the selected country has no fixed format
+    if (country.iso2 !== 'nz') {
     if ((text && text.length < 2) || !pattern || !autoFormat) {
-      return disableCountryCode ? text : this.props.prefix + text;
-    }
+      return disableCountryCode ? text : this.props.prefix+text;
+    }}
 
     const formattedObject = reduce(pattern, (acc, character) => {
       if (acc.remainingText.length === 0) {
@@ -490,18 +473,8 @@ class PhoneInput extends React.Component {
       formattedNumber = formattedObject.formattedText;
     }
 
-    // Only add closing parenthesis if we have an area code
-    if (country.iso2 === 'nz') {
-      const inputNumber = text.replace(/\D/g, '');
-      if (inputNumber.length >= 3) {
-        if (!formattedNumber.includes(')')) {
-          formattedNumber += ')';
-        }
-      }
-    } else if (formattedNumber.includes('(') && !formattedNumber.includes(')')) {
-      formattedNumber += ')';
-    }
-
+    // Always close brackets
+    if (formattedNumber.includes('(') && !formattedNumber.includes(')')) formattedNumber += ')';
     return formattedNumber;
   }
 
