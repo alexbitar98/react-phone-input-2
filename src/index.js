@@ -408,53 +408,19 @@ class PhoneInput extends React.Component {
 
     let pattern;
     if (country.iso2 === 'nz') {
-      // Clean the input number and handle the prefix
-      let cleanNumber = text.replace(/\D/g, '');
+      // Get the number without the country code
+      const numberWithoutPrefix = text.replace(/\D/g, '').replace(/^64/, '');
       
-      // Special handling for NZ numbers
-      if (cleanNumber === '64') {
-        return '+64 ';
-      }
-      
-      // Remove country code if present
-      if (cleanNumber.startsWith('64')) {
-        cleanNumber = cleanNumber.slice(2);
-      }
-
-      // Format based on the first digit
-      const firstDigit = cleanNumber[0];
-      const singleDigitPrefixes = ['3', '4', '6', '7', '9'];
-      
-      // Build the formatted number manually for NZ
-      if (!cleanNumber) {
-        return '+64 ';
-      } else if (cleanNumber.length === 1) {
-        return `+64 (${cleanNumber}`;
-      } else if (singleDigitPrefixes.includes(firstDigit)) {
-        // Single digit area code format
-        const areaCode = cleanNumber.slice(0, 1);
-        const firstPart = cleanNumber.slice(1, 4);
-        const secondPart = cleanNumber.slice(4);
-        
-        let formatted = `+64 (${areaCode})`;
-        if (firstPart) formatted += ` ${firstPart}`;
-        if (secondPart) formatted += `-${secondPart}`;
-        
-        return formatted;
+      // Set pattern based on first digit
+      if (numberWithoutPrefix && ['3', '4', '6', '7', '9'].includes(numberWithoutPrefix[0])) {
+        pattern = '+64 (.) ...-....';
       } else {
-        // Double digit area code format
-        const areaCode = cleanNumber.slice(0, 2);
-        const firstPart = cleanNumber.slice(2, 5);
-        const secondPart = cleanNumber.slice(5);
-        
-        let formatted = `+64 (${areaCode})`;
-        if (firstPart) formatted += ` ${firstPart}`;
-        if (secondPart) formatted += `-${secondPart}`;
-        
-        return formatted;
+        pattern = '+64 (..) ...-....';
       }
-    }
-    else if (disableCountryCode) {
+      
+      // Use cleaned number for formatting
+      text = numberWithoutPrefix;
+    } else if (disableCountryCode) {
       pattern = format.split(' ');
       pattern.shift();
       pattern = pattern.join(' ');
@@ -468,11 +434,12 @@ class PhoneInput extends React.Component {
       }
     }
 
-    // Rest of the original formatting code for non-NZ numbers
     if (!text || text.length === 0) {
       return disableCountryCode ? '' : this.props.prefix;
     }
 
+    // for all strings with length less than 3, just return it (1, 2 etc.)
+    // also return the same text if the selected country has no fixed format
     if ((text && text.length < 2) || !pattern || !autoFormat) {
       return disableCountryCode ? text : this.props.prefix+text;
     }
@@ -507,11 +474,8 @@ class PhoneInput extends React.Component {
       formattedNumber = formattedObject.formattedText;
     }
 
-    // Close brackets for non-NZ numbers
-    if (country.iso2 !== 'nz' && formattedNumber.includes('(') && !formattedNumber.includes(')')) {
-      formattedNumber += ')';
-    }
-    
+    // Always close brackets
+    if (formattedNumber.includes('(') && !formattedNumber.includes(')')) formattedNumber += ')';
     return formattedNumber;
   }
 
