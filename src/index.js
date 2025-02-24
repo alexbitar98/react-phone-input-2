@@ -408,8 +408,13 @@ class PhoneInput extends React.Component {
 
     let pattern;
     if (country.iso2 === 'nz') {
-      const inputNumber = text.replace(/\D/g, '');
-      const areaCode = inputNumber.slice(2, 3); // Get first digit after country code
+      // Remove any non-digits and ensure we don't have duplicate country code
+      let inputNumber = text.replace(/\D/g, '');
+      if (inputNumber.startsWith('64')) {
+        inputNumber = inputNumber.slice(2);
+      }
+      
+      const areaCode = inputNumber.slice(0, 1); // Get first digit of local number
       
       // Define patterns based on area code
       if (['3', '4', '6', '7', '9'].includes(areaCode)) {
@@ -421,13 +426,16 @@ class PhoneInput extends React.Component {
       }
 
       // If we don't have enough digits yet, just show what we have
-      if (inputNumber.length <= 2) {
+      if (inputNumber.length === 0) {
         return '+64 ';
-      } else if (inputNumber.length === 3) {
-        return `+64 (${inputNumber.slice(2)})`;
-      } else if (inputNumber.length === 4 && !['3', '4', '6', '7', '9'].includes(areaCode)) {
-        return `+64 (${inputNumber.slice(2, 4)})`;
+      } else if (inputNumber.length === 1) {
+        return `+64 (${inputNumber})`;
+      } else if (inputNumber.length === 2 && !['3', '4', '6', '7', '9'].includes(areaCode)) {
+        return `+64 (${inputNumber})`;
       }
+
+      // Format the rest of the number using the pattern
+      text = inputNumber; // Use the cleaned number for the rest of the formatting
     } else if (disableCountryCode) {
       pattern = format.split(' ');
       pattern.shift();
