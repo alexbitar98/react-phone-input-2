@@ -253,6 +253,8 @@ class PhoneInput extends React.Component {
     }
     else if (prevProps.value !== this.props.value) {
       this.updateFormattedNumber(this.props.value);
+    } else if (prevProps.masks !== this.props.masks) {
+      this.updateMasks();
     }
   }
 
@@ -307,6 +309,34 @@ class PhoneInput extends React.Component {
   });
 
   // Hooks for updated props
+  updateMasks() {
+    const { onlyCountries, preferredCountries, hiddenAreaCodes } = new CountryData(
+      this.props.enableAreaCodes, 
+      this.props.enableTerritories, 
+      this.props.regions,
+      this.props.onlyCountries, 
+      this.props.preferredCountries, 
+      this.props.excludeCountries, 
+      this.props.preserveOrder,
+      this.props.masks, 
+      this.props.priority, 
+      this.props.areaCodes, 
+      this.props.localization,
+      this.props.prefix, 
+      this.props.defaultMask, 
+      this.props.alwaysDefaultMask,
+    );
+  
+    this.setState({
+      onlyCountries,
+      preferredCountries,
+      hiddenAreaCodes,
+    }, () => {
+      this.updateFormattedNumber(this.props.value);
+    });
+  }
+
+  
   updateCountry = (country) => {
     const { onlyCountries } = this.state
     let newSelectedCountry;
