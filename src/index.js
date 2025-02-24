@@ -414,18 +414,19 @@ class PhoneInput extends React.Component {
       // Define patterns based on area code
       if (['3', '4', '6', '7', '9'].includes(areaCode)) {
         // Single digit area codes
-        if (inputNumber.length <= 3) {
-          pattern = '+64 (';
-        } else {
-          pattern = '+64 (.) ...-....';
-        }
+        pattern = '+64 (.) ...-....';
       } else {
         // Double digit area codes
-        if (inputNumber.length <= 4) {
-          pattern = '+64 (';
-        } else {
-          pattern = '+64 (..) ...-....';
-        }
+        pattern = '+64 (..) ...-....';
+      }
+
+      // If we don't have enough digits yet, just show what we have
+      if (inputNumber.length <= 2) {
+        return '+64 ';
+      } else if (inputNumber.length === 3) {
+        return `+64 (${inputNumber.slice(2)})`;
+      } else if (inputNumber.length === 4 && !['3', '4', '6', '7', '9'].includes(areaCode)) {
+        return `+64 (${inputNumber.slice(2, 4)})`;
       }
     } else if (disableCountryCode) {
       pattern = format.split(' ');
