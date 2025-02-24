@@ -408,15 +408,33 @@ class PhoneInput extends React.Component {
 
     let pattern;
     if (country.iso2 === 'nz') {
+      // First, ensure we have the proper +64 prefix
+      let normalizedText = text;
+      if (!text.startsWith('+')) {
+        normalizedText = '+' + text;
+      }
+      if (normalizedText.startsWith('+') && !normalizedText.startsWith('+64')) {
+        normalizedText = '+64' + normalizedText.substring(1);
+      }
+
       // Remove the +64 prefix for pattern matching
-      const numberWithoutPrefix = text.startsWith('+64') ? text.substring(3) : text;
+      const numberWithoutPrefix = normalizedText.startsWith('+64') ? normalizedText.substring(3) : normalizedText;
       const singleDigitPrefixes = ['3', '4', '6', '7', '9'];
       const startsWithSingleDigitPrefix = singleDigitPrefixes.some(prefix => 
         numberWithoutPrefix.startsWith(prefix)
       );
+
+      text = normalizedText; // Update the text to include proper prefix
       
-      // Format the number without the prefix
-      pattern = startsWithSingleDigitPrefix ? '+64 (.) ...-....' : '+64 (..) ...-....';
+      if (startsWithSingleDigitPrefix) {
+        const areaCode = numberWithoutPrefix[0];
+        const rest = numberWithoutPrefix.substring(1);
+        return `+64 (${areaCode}) ${rest.slice(0,3)}-${rest.slice(3)}`.trim();
+      } else {
+        const areaCode = numberWithoutPrefix.slice(0,2);
+        const rest = numberWithoutPrefix.substring(2);
+        return `+64 (${areaCode}) ${rest.slice(0,3)}-${rest.slice(3)}`.trim();
+      }
     } else if (disableCountryCode) {
       pattern = format.split(' ');
       pattern.shift();
