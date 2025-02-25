@@ -407,18 +407,7 @@ class PhoneInput extends React.Component {
     const { disableCountryCode, enableAreaCodeStretch, enableLongNumbers, autoFormat } = this.props;
 
     let pattern;
-    if (country.iso2 === 'nz') {
-      // Get the number without non-digits
-      const numberWithoutPrefix = text.replace(/\D/g, '');
-      
-      // Set pattern based on first digit after country code
-      const firstLocalDigit = numberWithoutPrefix.replace(/^64/, '')[0];
-      if (firstLocalDigit && ['3', '4', '6', '7', '9'].includes(firstLocalDigit)) {
-        pattern = '+64 (.) ...-....';
-      } else {
-        pattern = '+64 (..) ...-....';
-      }
-    } else if (disableCountryCode) {
+    if (disableCountryCode) {
       pattern = format.split(' ');
       pattern.shift();
       pattern = pattern.join(' ');
